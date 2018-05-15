@@ -17,6 +17,8 @@ namespace MaxServ\FalS3\Driver;
 use Aws;
 use GuzzleHttp;
 use TYPO3;
+use TYPO3\CMS\Core\Resource\Exception;
+use TYPO3\CMS\Core\Utility\PathUtility;
 
 /**
  * Class AmazonS3Driver
@@ -25,6 +27,10 @@ use TYPO3;
  */
 class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchicalFilesystemDriver
 {
+    /**
+     * @var string
+     */
+    const UNSAFE_FILENAME_CHARACTER_EXPRESSION = '\\x00-\\x2C\\/\\x3A-\\x3F\\x5B-\\x60\\x7B-\\xBF';
 
     /**
      * @var string
@@ -394,6 +400,46 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
     }
 
     /**
+     * Returns a string where any character not matching [.a-zA-Z0-9_-] is
+     * substituted by '_'
+     * Trailing dots are removed
+     *
+     * @param string $fileName Input string, typically the body of a fileName
+     * @param string $charset Charset of the a fileName (defaults to utf-8)
+     * @return string Output string with any characters not matching [.a-zA-Z0-9_-] is substituted by '_' and trailing dots removed
+     * @throws Exception\InvalidFileNameException
+     */
+    public function sanitizeFileName($fileName, $charset = 'utf-8')
+    {
+        // Handle UTF-8 characters
+        if ($GLOBALS['TYPO3_CONF_VARS']['SYS']['UTF8filesystem']) {
+            // Allow ".", "-", 0-9, a-z, A-Z and everything beyond U+C0 (latin capital letter a with grave)
+            $cleanFileName = preg_replace(
+                '/[' . self::UNSAFE_FILENAME_CHARACTER_EXPRESSION . ']/u',
+                '_',
+                trim($fileName)
+            );
+        } else {
+            $fileName = $this->getCharsetConversion()->specCharsToASCII($charset, $fileName);
+            // Replace unwanted characters by underscores
+            $cleanFileName = preg_replace(
+                '/[' . self::UNSAFE_FILENAME_CHARACTER_EXPRESSION . '\\xC0-\\xFF]/',
+                '_',
+                trim($fileName)
+            );
+        }
+        // Strip trailing dots and return
+        $cleanFileName = rtrim($cleanFileName, '.');
+        if ($cleanFileName === '') {
+            throw new Exception\InvalidFileNameException(
+                'File name ' . $fileName . ' is invalid.',
+                1515521536
+            );
+        }
+        return $cleanFileName;
+    }
+
+    /**
      * Adds a file from the local server hard disk to a given path in TYPO3s
      * virtual file system. This assumes that the local file exists, so no
      * further check is done here! After a successful the original file must
@@ -409,6 +455,11 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
     public function addFile($localFilePath, $targetFolderIdentifier, $newFileName = '', $removeOriginal = true)
     {
         $targetFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier($targetFolderIdentifier);
+
+        if ($newFileName === '') {
+            PathUtility::basename($localFilePath);
+        }
+        $newFileName = $this->sanitizeFileName($newFileName);
         $targetFileIdentifier = rtrim($targetFolderIdentifier, '/') . $this->canonicalizeAndCheckFileIdentifier($newFileName);
         $targetFilePath = $this->getStreamWrapperPath($targetFileIdentifier);
 
@@ -433,12 +484,14 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
     public function createFile($fileName, $parentFolderIdentifier)
     {
         $parentFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier($parentFolderIdentifier);
-        $targetFileIdentifier = rtrim($parentFolderIdentifier, '/') . $this->canonicalizeAndCheckFileIdentifier($fileName);
+        $targetFileIdentifier =  $this->canonicalizeAndCheckFileIdentifier(
+            $parentFolderIdentifier . $this->sanitizeFileName(ltrim($fileName, '/'))
+        );
         $basePath = '';
 
         if (array_key_exists('basePath', $this->configuration) && !empty($this->configuration['basePath'])) {
             $basePath = '/' . trim($this->configuration['basePath'], '/');
-        }       
+        }
 
         // create an empty file using the putObject method instead of the wrapper
         // file_put_contents() without data or touch() yield unexpected results
