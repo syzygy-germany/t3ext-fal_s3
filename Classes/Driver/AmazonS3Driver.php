@@ -559,20 +559,8 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
     public function hash($fileIdentifier, $hashAlgorithm)
     {
         $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier($fileIdentifier);
-        $path = $this->getStreamWrapperPath($fileIdentifier);
 
-        switch ($hashAlgorithm) {
-            case 'sha1':
-                $hash = sha1_file($path);
-                break;
-            case 'md5':
-                $hash = md5_file($path);
-                break;
-            default:
-                throw new \RuntimeException('Hash algorithm ' . $hashAlgorithm . ' is not implemented.', 1329644451);
-        }
-
-        return $hash;
+        return sha1($fileIdentifier);
     }
 
     /**
