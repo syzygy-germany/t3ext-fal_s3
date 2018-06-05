@@ -1131,12 +1131,11 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
                 continue;
             }
             $iterator->next();
-            $file = $this->getFileInfoByIdentifier($entry);
             if(! $this->applyFilterMethodsToDirectoryItem(
                     $filterMethods,
-                    $file['name'],
-                    $file['identifier'],
-                    $this->getParentFolderIdentifierOfIdentifier($file['identifier']))
+                    $entry,
+                    $entry,
+                    $this->getParentFolderIdentifierOfIdentifier($entry))
             ) {
                 unset($directoryEntries[$entry]);
             }
