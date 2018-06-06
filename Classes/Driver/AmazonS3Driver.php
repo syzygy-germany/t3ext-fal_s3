@@ -822,9 +822,8 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
 
         copy($path, $temporaryFilePath);
 
-        if (!$writable) {
-            $this->temporaryFiles[$fileIdentifier] = $temporaryFilePath;
-        }
+        // add to temporary files to be cleanup after __destruct correctly
+        $this->temporaryFiles[$fileIdentifier] = $temporaryFilePath;
 
         return $temporaryFilePath;
     }
