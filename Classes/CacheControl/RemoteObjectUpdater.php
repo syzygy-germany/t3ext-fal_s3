@@ -90,6 +90,11 @@ class RemoteObjectUpdater
         $taskType,
         array $configuration
     ) {
+        // If processFile was unsuccessful, getFileInfoByIdentifier will throw an error
+        if (! $processedFile->exists()) {
+            return;
+        }
+
         $fileInfo = $driver->getFileInfoByIdentifier($processedFile->getIdentifier());
 
         if (is_array($fileInfo)
