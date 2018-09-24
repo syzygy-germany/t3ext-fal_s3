@@ -63,7 +63,7 @@ class RemoteObjectUpdater
                 );
             }
         }
-        
+
         return [$data];
     }
 
@@ -91,11 +91,13 @@ class RemoteObjectUpdater
         array $configuration
     ) {
         // If processFile was unsuccessful, getFileInfoByIdentifier will throw an error
-        if (! $processedFile->exists()) {
+        if (!$processedFile->exists()
+            || !FalS3\Utility\RemoteObjectUtility::resolveClientForStorage($processedFile->getStorage())
+        ) {
             return;
         }
 
-        $fileInfo = $driver->getFileInfoByIdentifier($processedFile->getIdentifier());
+        $fileInfo = $processedFile->getStorage()->getFileInfoByIdentifier($processedFile->getIdentifier());
 
         if (is_array($fileInfo)
             && array_key_exists('mtime', $fileInfo)
