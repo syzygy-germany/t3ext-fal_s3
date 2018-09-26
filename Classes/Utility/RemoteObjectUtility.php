@@ -76,7 +76,7 @@ class RemoteObjectUtility
 
         if (array_key_exists($storageIdentifier, self::$driverConfigurations)) {
             $driverConfiguration = self::$driverConfigurations[$storageIdentifier];
-        } else if ($storage->getDriverType() === FalS3\Driver\AmazonS3Driver::DRIVER_KEY) {
+        } elseif ($storage->getDriverType() === FalS3\Driver\AmazonS3Driver::DRIVER_KEY) {
             $storageConfiguration = $storage->getConfiguration();
 
             if (array_key_exists('configurationKey', $storageConfiguration)) {
@@ -90,6 +90,16 @@ class RemoteObjectUtility
         }
 
         return $driverConfiguration;
+    }
+
+    /**
+     * @param Core\Resource\ResourceStorage $storage
+     *
+     * @return bool
+     */
+    public static function hasCacheControlDirectivesInStorage(Core\Resource\ResourceStorage $storage)
+    {
+        return !empty(self::resolveDriverConfigurationForStorage($storage)['cacheControl']);
     }
 
     /**

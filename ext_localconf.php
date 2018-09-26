@@ -84,6 +84,11 @@ $signalSlotDispatcher->connect(
     'onPreFileProcess'
 );
 
+/*
+ * Disable this functionality for now as there are conceptual issues to be resolved
+ * namely that the cache control header meta data update causes the modification date
+ * of the remote file change, thus leading to an invalidation of all processed files.
+ *
 // cache control, trigger an update of remote objects if a changes is made locally (eg. by running the scheduler)
 $signalSlotDispatcher->connect(
     'TYPO3\\CMS\\Core\\Resource\\Index\\MetaDataRepository',
@@ -105,6 +110,7 @@ $signalSlotDispatcher->connect(
     'MaxServ\\FalS3\\CacheControl\\RemoteObjectUpdater',
     'onPostFileProcess'
 );
+*/
 
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['deployer']['configuration']['FalS3.yaml'] = array(
     'converter' => 'MaxServ\\FalS3\\Configuration\\ConfigurationConverter',

@@ -43,7 +43,9 @@ class RemoteObjectUpdater
             $file = null;
         }
 
-        if ($file->getStorage()->getDriverType() !== FalS3\Driver\AmazonS3Driver::DRIVER_KEY) {
+        if ($file->getStorage()->getDriverType() !== FalS3\Driver\AmazonS3Driver::DRIVER_KEY
+            || !FalS3\Utility\RemoteObjectUtility::hasCacheControlDirectivesInStorage($file->getStorage())
+        ) {
             return;
         }
 
@@ -90,9 +92,10 @@ class RemoteObjectUpdater
         $taskType,
         array $configuration
     ) {
-        // If processFile was unsuccessful, getFileInfoByIdentifier will throw an error
+        // Early return if we don't have an existing file for some reason,
+        // or we don't have the required config to proceed
         if (!$processedFile->exists()
-            || !FalS3\Utility\RemoteObjectUtility::resolveClientForStorage($processedFile->getStorage())
+            || !FalS3\Utility\RemoteObjectUtility::hasCacheControlDirectivesInStorage($processedFile->getStorage())
         ) {
             return;
         }
@@ -151,7 +154,7 @@ class RemoteObjectUpdater
             $cacheControl = FalS3\Utility\RemoteObjectUtility::resolveCacheControlDirectivesForFile($file);
         }
 
-        if ($cacheControl !== null
+        if (!empty($cacheControl)
             && $currentResource instanceof Aws\Result
             && $currentResource->hasKey('Metadata')
             && is_array($currentResource->get('Metadata'))
