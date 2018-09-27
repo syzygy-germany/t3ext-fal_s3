@@ -354,10 +354,7 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
     {
         $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier($fileIdentifier);
 
-        $path = rtrim(
-            $this->getStreamWrapperPath($fileIdentifier),
-            '/'
-        );
+        $path = $this->getStreamWrapperPath($fileIdentifier);
 
         if (!array_key_exists($path, $this->fileExistsCache)) {
             $this->fileExistsCache[$path] = is_file($path);
@@ -376,10 +373,7 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
     {
         $folderIdentifier = $this->canonicalizeAndCheckFolderIdentifier($folderIdentifier);
 
-        $path = rtrim(
-            $this->getStreamWrapperPath($folderIdentifier),
-            '/'
-        );
+        $path = $this->getStreamWrapperPath($folderIdentifier);
 
         if (!array_key_exists($path, $this->folderExistsCache)) {
             $this->folderExistsCache[$path] = is_dir($path);
@@ -614,6 +608,9 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
         echo 'Hashing file: ' . $fileIdentifier . ' (This may take a while...)';
         $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier($fileIdentifier);
         $path = $this->getStreamWrapperPath($fileIdentifier);
+        if (isset($this->temporaryFiles[$fileIdentifier])) {
+            $path = $this->temporaryFiles[$fileIdentifier];
+        }
         switch ($hashAlgorithm) {
             case 'sha1':
                 $hash = sha1_file($path);
@@ -1317,6 +1314,11 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
      */
     protected function flushCacheEntriesForFolder($folderIdentifier)
     {
+        // Files and/or folders have changed
+        // Ensure correct results for all following API calls by flushing the runtime cache as well
+        $this->fileExistsCache = [];
+        $this->folderExistsCache = [];
+
         $folderIdentifier = $this->canonicalizeAndCheckFolderIdentifier($folderIdentifier);
         $path = $this->getStreamWrapperPath($folderIdentifier);
 
