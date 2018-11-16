@@ -55,6 +55,13 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
     protected $temporaryFiles = array();
 
     /**
+     * List of temporary files
+     *
+     * @var array
+     */
+    protected $removableTemporaryFiles = array();
+
+    /**
      * Simple runtime cache to prevent numerous calls to S3 or the Caching Framework
      *
      * @var array
@@ -89,7 +96,7 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
      */
     public function __destruct()
     {
-        foreach ($this->temporaryFiles as $temporaryFile) {
+        foreach ($this->removableTemporaryFiles as $temporaryFile) {
             if (file_exists($temporaryFile)) {
                 unlink($temporaryFile);
             }
@@ -376,7 +383,8 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
         $path = $this->getStreamWrapperPath($folderIdentifier);
 
         if (!array_key_exists($path, $this->folderExistsCache)) {
-            $this->folderExistsCache[$path] = is_dir($path);
+            // rtrim is important here, otherwise S3 API behaves inconsistent on folders
+            $this->folderExistsCache[$path] = is_dir(rtrim($path, '/'));
         }
 
         return $this->folderExistsCache[$path];
@@ -459,8 +467,9 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
 
         copy($localFilePath, $targetFilePath);
 
+        $this->temporaryFiles[$targetFileIdentifier] = $localFilePath;
         if ($removeOriginal) {
-            $this->temporaryFiles[$targetFileIdentifier] = $localFilePath;
+            $this->removableTemporaryFiles[$targetFileIdentifier] = $localFilePath;
         }
 
         $this->flushCacheEntriesForFolder($targetFolderIdentifier);
@@ -575,6 +584,7 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
         $this->flushCacheEntriesForFolder(dirname($fileIdentifier));
 
         $this->temporaryFiles[$fileIdentifier] = $localFilePath;
+        $this->removableTemporaryFiles[$fileIdentifier] = $localFilePath;
         return copy($localFilePath, $filePath);
     }
 
@@ -819,8 +829,11 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
 
         copy($path, $temporaryFilePath);
 
-        // add to temporary files to be cleanup after __destruct correctly
         $this->temporaryFiles[$fileIdentifier] = $temporaryFilePath;
+        if (!$writable) {
+            // add to temporary files to be cleanup after __destruct correctly
+            $this->removableTemporaryFiles[$fileIdentifier] = $temporaryFilePath;
+        }
 
         return $temporaryFilePath;
     }
