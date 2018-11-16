@@ -73,7 +73,11 @@ class Cache extends Aws\LruArrayCache
 
         parent::set($key, $value, $ttl);
 
-        $cacheFrontend->set($entryIdentifier, $value, array(), $ttl);
+        $cacheTags = [
+            Cache::buildEntryIdentifier(rtrim($key, '/') . '/', 'd'),
+            Cache::buildEntryIdentifier(dirname($key) . '/', 'd')
+        ];
+        $cacheFrontend->set($entryIdentifier, $value, $cacheTags, $ttl);
     }
 
     /**
