@@ -615,18 +615,27 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
      */
     public function hash($fileIdentifier, $hashAlgorithm)
     {
-        echo 'Hashing file: ' . $fileIdentifier . ' (This may take a while...)';
         $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier($fileIdentifier);
-        $path = $this->getStreamWrapperPath($fileIdentifier);
-        if (isset($this->temporaryFiles[$fileIdentifier])) {
-            $path = $this->temporaryFiles[$fileIdentifier];
-        }
         switch ($hashAlgorithm) {
             case 'sha1':
-                $hash = sha1_file($path);
+                $localFile = $this->getFileForLocalProcessing($fileIdentifier, false);
+                $hash = sha1_file($localFile);
                 break;
             case 'md5':
-                $hash = md5_file($path);
+                $basePath = '';
+                if (array_key_exists('basePath', $this->configuration) && !empty($this->configuration['basePath'])) {
+                    $basePath = '/' . trim($this->configuration['basePath'], '/');
+                }
+                $result = $this->s3Client->headObject(array(
+                    'Bucket' => $this->configuration['bucket'],
+                    'Key' => ltrim($basePath . $fileIdentifier, '/'),
+                ));
+
+                $hash = trim($result->get('ETag'), '"');
+                if (!preg_match('/^[a-f0-9]{32}$/', $hash)) {
+                    $localFile = $this->getFileForLocalProcessing($fileIdentifier, false);
+                    $hash = md5_file($localFile);
+                }
                 break;
             default:
                 throw new \RuntimeException('Hash algorithm ' . $hashAlgorithm . ' is not implemented.', 1329644451);
