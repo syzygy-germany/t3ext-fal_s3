@@ -47,6 +47,7 @@ class ConfigurationDefinition implements Symfony\Component\Config\Definition\Con
                 ->scalarNode('basePath')->defaultValue('')->end()
                 ->scalarNode('publicBaseUrl')->end()
                 ->scalarNode('defaultFolder')->defaultValue('user_upload')->end()
+                ->scalarNode('scheme')->defaultValue('https')->end()
             ->scalarNode('name')->end()
             ->end();
 

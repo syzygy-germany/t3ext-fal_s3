@@ -55,7 +55,8 @@ class RemoteObjectUtility
                 'credentials' => array(
                     'key' => $driverConfiguration['key'],
                     'secret' => $driverConfiguration['secret']
-                )
+                ),
+                'scheme' => $driverConfiguration['scheme']
             ));
 
             self::$clients[$storageIdentifier] = $client;
