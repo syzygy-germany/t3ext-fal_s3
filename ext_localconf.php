@@ -124,4 +124,7 @@ if (!isset($GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations'][
         'system'
     );
 }
+
+$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/install']['update']['sha1Update'] = \MaxServ\FalS3\Updates\Sha1Update::class;
+
 unset($driverRegistry, $signalSlotDispatcher);
