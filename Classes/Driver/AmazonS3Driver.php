@@ -494,7 +494,7 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
         $basePath = '';
 
         if (array_key_exists('basePath', $this->configuration) && !empty($this->configuration['basePath'])) {
-            $basePath = '/' . trim($this->configuration['basePath'], '/');
+            $basePath = trim($this->configuration['basePath'], '/');
         }
 
         // create an empty file using the putObject method instead of the wrapper
@@ -620,7 +620,7 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
 
         $basePath = '';
         if (!empty($this->configuration['basePath'])) {
-            $basePath = '/' . trim($this->configuration['basePath'], '/');
+            $basePath = trim($this->configuration['basePath'], '/');
         }
         $result = $this->s3Client->headObject([
             'Bucket' => $this->configuration['bucket'],
