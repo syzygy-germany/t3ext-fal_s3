@@ -40,7 +40,7 @@ class Sha1Update extends AbstractUpdate
      */
     public function checkForUpdate(&$description)
     {
-        $description = 'The hash calculation for files (content) has been changed with.'
+        $description = 'The hash calculation for files (content) has been changed.'
             . ' This means that your processed files need to be updated.<br />'
             . ' This can either happen on demand, when the processed file is first needed, or by executing this'
             . ' wizard, which updates all processed files at once.<br />'
