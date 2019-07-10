@@ -53,7 +53,7 @@ class Sha1Update extends AbstractUpdate
 
         // Check if there is a registry entry from a former run that may have been stopped
         $registry = GeneralUtility::makeInstance(Registry::class);
-        $registryEntry = $registry->get('falS3', 'Sha1Update');
+        $registryEntry = $registry->get('falS3', 'sha1Update');
         if ($registryEntry !== null) {
             return true;
         }
