@@ -636,6 +636,17 @@ class AmazonS3Driver extends TYPO3\CMS\Core\Resource\Driver\AbstractHierarchical
             case 'md5':
                 $hash = md5($etag);
                 break;
+            case 'md5File':
+                $hash = $etag;
+                if (!preg_match('/^[a-f0-9]{32}$/', $etag)) {
+                    $localFile = $this->getFileForLocalProcessing($fileIdentifier, false);
+                    $hash = md5_file($localFile);
+                }
+                break;
+            case 'sha1File':
+                $localFile = $this->getFileForLocalProcessing($fileIdentifier, false);
+                $hash = sha1_file($localFile);
+                break;
             default:
                 throw new \RuntimeException('Hash algorithm ' . $hashAlgorithm . ' is not implemented.', 1329644451);
         }
